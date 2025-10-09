@@ -4,25 +4,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerenciamento de Usuário</title>
+    <title>Gerenciamento de Pessoas</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <div class="container">
-        <h1>Gerenciamento de usuario</h1>
-        <p>Clique em "Listar Usuários" para carregar dados</p>
+        <h1>Gerenciamento de pessoas</h1>
+        <p>Clique em "Listar Pessoas" para carregar dados</p>
         <div class="header-bottons">
-            <button id="btnListUsers"> Listar Usuários</button>
+            <button id="btnListUsers" class="btn-action"> Listar Pessoas</button>
+            <button id="btnLoginModal" class="btn-action">Login</button>
+            <button id="btnRegisterModal" class="btn-action">Criar Usuário</button>
+
+            <p id="adminAuthStatus" class="auth-status"></p>
         </div>
 
         <div id="user-cards-container" class="cards-grid"></div>
 
-        <h2>Adicionar Novo Usuário</h2>
+        <h2>Cadastrar Pessoas</h2>
         <form id="addUserForm" class="add-user-form">
-            <input type="text" id="addName" placeholder="Nome do Usuário" required>
-            <input type="number" id="addAge" placeholder="Idade do Usuário" required>
-            <button type="submit">Adicionar Usuário</button>
+            <input type="text" id="addName" placeholder="Nome da Pessoa" required>
+            <input type="number" id="addAge" placeholder="Idade da Pessoa" required>
+            <button type="submit">Adicionar Pessoa</button>
         </form>
 
 
@@ -30,7 +34,7 @@
 
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <h2>Editar Usuário</h2>
+            <h2>Editar Pessoa</h2>
             <form id="editUserForm">
                 <input type="hidden" id="editId">
                 <label for="editName"> Nome: </label>
@@ -42,6 +46,43 @@
                     <button type="button" class="btn-cancel" id="btnCancelEdit">Cancelar</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h2>Login Administrador</h2>
+            <form id="admLoginForm">
+                <label for="adminUserName">Usuário</label>
+                <input type="text" id="adminUserName" required>
+                <label for="adminPassword">Senha</label>
+                <input type="password" id="adminPassword" required>
+                <div class="modal-buttons">
+                    <button class="btn-save" type="submit">Entrar</button>
+                    <button class="btn-cancel" type="button">Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <div id="registerModal" class="modal">
+            <div class="modal-content">
+                <h2>Criação de Login</h2>
+                <form id="adminRegisterForm">
+                    <p id="adminRegisterStatus" class="auth-status"></p>
+
+                    <label for="regUserName">Nome de Usuário:</label>
+                    <input type="text" id="regUserName" required>
+
+                    <label for="regPassword">Senha:</label>
+                    <input type="password" id="regPassword" required>
+
+                    <div class="modal-buttons">
+                        <button type="submit" class="btn-save">Registrar</button>
+                        <button type="button" class="btn-cancel" id="btnCancelarRegister">Cancelar</button>
+                    </div>
+
+                </form>
+            </div>
         </div>
     </div>
 
