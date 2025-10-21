@@ -1,4 +1,7 @@
 // A URL completa da sua API.
+
+const { response } = require("express");
+
 // Este é o endereço do seu servidor Node.js que está rodando localmente.
 const API_URL = 'http://localhost:3002/usuarios';
 
@@ -17,6 +20,22 @@ const editIdInput = document.getElementById('editId');
 const editNameInput = document.getElementById('editName');
 const editAgeInput = document.getElementById('editAge');
 
+//Elementos do modal login
+const loginModal = document.getElementById('loginModal');
+const adminLoginModal = document.getElementById('btnLoginModal');
+const btnCancelLogin = document.getElementById('btnCancelLogin');
+const adminLoginForm = document.getElementById('adminLoginForm');
+const adminAuthStatus = document.getElementById('adminAuthStatus');
+
+//Elementos do modal de registro
+const registerModal = document.getElementById('registerModal');
+const btnRegisterModal = document.getElementById('btnRegisterModal');
+const btnCancelRegister = document.getElementById('btnCancelRegister');
+const adminRegisterForm = document.getElementById('adminRegisterForm');
+const adminRegisterStatus = document.getElementById('adminRegisterStatus');
+
+//Variável Global para o Token
+let authToken = '';
 
 // ----------------------------
 // 2. FUNÇÕES DE INTERAÇÃO COM A API
@@ -43,13 +62,13 @@ function addUser(userData) {
         },
         body: JSON.stringify(userData) // Converte o objeto JavaScript em JSON
     })
-    .then(response => response.json())
-    .then(() => {
-        // Após a adição, recarrega a lista para mostrar o novo usuário
-        addUserForm.reset(); // Limpa o formulário
-        fetchAndRenderUsers();
-    })
-    .catch(error => console.error('Erro ao adicionar usuário:', error));
+        .then(response => response.json())
+        .then(() => {
+            // Após a adição, recarrega a lista para mostrar o novo usuário
+            addUserForm.reset(); // Limpa o formulário
+            fetchAndRenderUsers();
+        })
+        .catch(error => console.error('Erro ao adicionar usuário:', error));
 }
 
 // Função para editar um usuário existente
@@ -61,26 +80,99 @@ function editUser(userId, userData) {
         },
         body: JSON.stringify(userData)
     })
-    .then(response => response.json())
-    .then(() => {
-        // Após a edição, fecha o pop-up e recarrega a lista
-        editModal.style.display = 'none';
-        fetchAndRenderUsers();
+        .then(response => response.json())
+        .then(() => {
+            // Após a edição, fecha o pop-up e recarrega a lista
+            editModal.style.display = 'none';
+            fetchAndRenderUsers();
+        })
+        .catch(error => console.error('Erro ao editar usuário:', error));
+}
+
+//Função para Criar conta - Registrar Aministrador
+function handleAdminRegister(email, password) {
+    adminRegisterStatus.textContent = 'Registrando...';
+    adminRegisterStatus.style.color = 'blue';
+
+    fetch('https://localhost:3002/api/register-admin'{
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
     })
-    .catch(error => console.error('Erro ao editar usuário:', error));
+        .then(response => response.json())
+        .then(data => {
+            if (data.mensagem && data.mensagem.includes("sucesso")) {
+                adminRegisterStatus.style.color = 'green';
+                adminRegisterStatus.textContent = 'conta criada com sucesso';
+                setTimeout(() => {
+                    registerModal.style.display = 'none';
+                    document.getElementById('regUsername').value = '';
+                    document.getElementById('regPassword').value = '';
+                }, 2000);
+
+            } else {
+                adminRegisterStatus.style.color = 'red';
+                adminRegisterStatus.textContent = data.mensagem;
+            }
+        })
+        .catch(() => {
+            adminRegisterStatus.style.color = 'red';
+            adminRegisterStatus.textContent = 'Erro na rede ou servidor';
+        })
+}
+
+//Função para login 
+function handleAdminLogin(email, password){
+    fetch('https://localhost:3002/api/register-admin', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({email, password})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if(data.token) {
+            authToken = data.token;
+            adminAuthStatus.style.color = 'green';
+            adminAuthStatus.textContent = 'Login realizado com sucesso! Token obtido';
+            loginModal.style.display = 'none'
+        }else{
+            authToken = '';
+            adminAuthStatus.style.color = 'red';
+            adminAuthStatus.textContent = data.mensagem;
+        }
+    })
+    .catch(() => {
+        adminAuthStatus.style.color = 'red';
+        adminAuthStatus.textContent = 'Erro de rede ou servidor';
+    })
 }
 
 // Função para deletar um usuário
 function deleteUser(userId) {
+    if(!authToken){
+        adminAuthStatus.style.color = 'orange';
+        adminAuthStatus.textContent = 'ERRO: Faça login para deletar';
+        return
+    }
     fetch(`${API_URL}/${userId}`, {
-        method: 'DELETE' // Define o método da requisição como DELETE
+        method: 'DELETE',
+        headers: {
+            'Autorizathion':`Bearer ${authToken}`
+        }
     })
-    .then(response => response.json())
+    .then(response => {
+        if(response.status === 401){
+            adminAuthStatus.style.color = 'red';
+            adminAuthStatus.textContent = 'Não autorizado! Token inválido'
+            return response.json().then(err => Promise.reject(err));
+        }
+        return response.json
+    })
     .then(() => {
-        // Após a exclusão, recarrega a lista
-        fetchAndRenderUsers();
+        fetchAndRenderUsers()
+
     })
-    .catch(error => console.error('Erro ao excluir usuário:', error));
+    .catch(error => console.error('Erro ao excluir usuário:', error.message))
 }
 
 
@@ -102,7 +194,7 @@ function renderUsers(users) {
 
         userCard.innerHTML = `
             <div class="user-info">
-                <p><strong>ID:</strong> ${user._id.slice(0,5)}...</p>
+                <p><strong>ID:</strong> ${user._id.slice(0, 5)}...</p>
                 <p><strong>Nome:</strong> ${user.nome}</p>
                 <p><strong>Idade:</strong> ${user.idade}</p>
             </div>
@@ -111,7 +203,7 @@ function renderUsers(users) {
                 <button class="btn-delete">Excluir</button>
             </div>
         `;
-        
+
         // Adiciona os botões de ação com os listeners
         const editBtn = userCard.querySelector('.btn-edit');
         const deleteBtn = userCard.querySelector('.btn-delete');
@@ -126,7 +218,7 @@ function renderUsers(users) {
 
         // Listener para o botão de Exclusão
         deleteBtn.addEventListener('click', () => {
-            if (confirm(`Tem certeza que deseja excluir o usuário ${user._id.slice(0,5)}?`)) {
+            if (confirm(`Tem certeza que deseja excluir o usuário ${user._id.slice(0, 5)}?`)) {
                 deleteUser(user._id);
             }
         });
