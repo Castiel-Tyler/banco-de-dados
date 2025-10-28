@@ -6,14 +6,15 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken'); // Para Tokens
-const bcrypt = require('bcryptjs'); //para criptografia
+const bcrypt = require('bcryptjs'); //Para criptografia
 
 const User = require('./models/User')
 const Pessoa = require('./models/Pessoa')
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3003;
 const mongoURI = process.env.MONGO_URI;
 const JWT_SECRET = process.env.JWT_SECRET;
+
 
 
 //CONEXÃO MONGODB
@@ -27,34 +28,23 @@ mongoose.connect(mongoURI)
 
 //Função geradora do token de login
 const generateToken = (id) => {
-    return jwt.sign({ id }), JWT_SECRET, { expiresIn: '1d' }
+    return jwt.sign({ id }, JWT_SECRET, { expiresIn: '1d' })
 }
 
 const protect = (req, res, next) => {
     let token;
 
-    if (req.headers.authorization && req.headers.authorization.startsWitch('Bearer')) {
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
             token = req.headers.authorization.split(' ')[1];
             jwt.verify(token, JWT_SECRET);
             next()
         } catch (error) {
-            return res.status(401).json({ mensagem: 'Não autorizado, token inválido' })
+            return res.status(401).json({ mensagem: "Não autorizado, token inválido" })
         }
     }
 }
 
-
-//estrutura do documento SCHEMA 
-const usuarioSchema = new mongoose.Schema(
-    {
-        nome: { type: String, required: true },
-        idade: { type: Number, required: true }
-    }, { timestamps: true }
-);
-
-//Modelo e Collection
-const Usuario = mongoose.model('Usuario', usuarioSchema)
 
 
 //Criando minha aplicação
@@ -64,41 +54,41 @@ const app = express()
 app.use(express.json())
 app.use(cors())
 
-//Rotas Adimin
+
+// ROTAS ADMIN - CRIAÇÃO DE USUÁRIO
 app.post('/api/register-admin', async (req, res) => {
     const { email, password } = req.body
-
     try {
-        const userExists = await User.findOne({ 'email'})
+        const userExists = await User.findOne({ email })
         if (userExists) {
-            return res.status(400).json({ mensagem: 'Nome de usuário já existe' })
+            return res.status(400).json({ mensagem: "Nome de usuário já existe" })
         }
         const user = await User.create({ email, password })
-        res.status(201).json({ mensagem: 'Usuário criado com sucesso' })
+        res.status(201).json({ mensagem: "Usuário criado com sucesso" })
     } catch (error) {
-        res.status(500).json({ mensagem: 'Erro no registro admin', erro: error.message })
+        res.status(500).json({ mensagem: "Erro no registro admin", erro: error.message })
     }
 })
 
-app.post('api/logim-admin', async (req, res) => {
+//LOGIN DE USUÁRIO
+app.post('/api/login-admin', async (req, res) => {
     const { email, password } = req.body
     try {
-        const user = await User.findOne({ email }).select('.password');
+        const user = await User.findOne({ email }).select('+password');
+
         if (user && (await user.matchPassword(password))) {
             res.json({
                 email: user.email,
                 token: generateToken(user._id),
-                mensagem: 'Login realizado com sucesso'
+                mensagem: "Login Realizado com sucesso"
             })
         } else {
-            res.status(401).json({ mensagem: 'Credenciais inválidas' })
+            res.status(401).json({ mensagem: "Credenciais inválidas" })
         }
     } catch (error) {
-        res.status(500).json({ mensagem: '' })
+        res.status(500).json({ mensagem: "Erro no login", erro: error.message })
     }
 })
-
-
 
 
 app.get('/', (req, res) => {
@@ -206,7 +196,7 @@ app.put('/pessoas/:id', async (req, res) => {
             return res.status(404).json({ mensagem: " Usuário Não Encontrado" })
         }
         res.json(usuarioAtualizado)
-    } catch {
+    } catch (error) {
         res.status(400).json({ mensagem: "Erro ao atualizar", erro: error.message })
     }
 })

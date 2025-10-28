@@ -1,9 +1,6 @@
 // A URL completa da sua API.
-
-const { response } = require("express");
-
 // Este é o endereço do seu servidor Node.js que está rodando localmente.
-const API_URL = 'http://localhost:3002/usuarios';
+const API_URL = 'http://localhost:3003/pessoas';
 
 // ----------------------
 // 1. SELEÇÃO DE ELEMENTOS
@@ -20,21 +17,21 @@ const editIdInput = document.getElementById('editId');
 const editNameInput = document.getElementById('editName');
 const editAgeInput = document.getElementById('editAge');
 
-//Elementos do modal login
-const loginModal = document.getElementById('loginModal');
-const adminLoginModal = document.getElementById('btnLoginModal');
-const btnCancelLogin = document.getElementById('btnCancelLogin');
-const adminLoginForm = document.getElementById('adminLoginForm');
-const adminAuthStatus = document.getElementById('adminAuthStatus');
+//Elementos do Modal de Login
+const loginModal = document.getElementById('loginModal')
+const btnLoginModal = document.getElementById('btnLoginModal')
+const btnCancelLogin = document.getElementById('btnCancelLogin')
+const adminLoginForm = document.getElementById('adminLoginForm')
+const adminAuthStatus = document.getElementById('adminAuthStatus')
 
-//Elementos do modal de registro
-const registerModal = document.getElementById('registerModal');
-const btnRegisterModal = document.getElementById('btnRegisterModal');
-const btnCancelRegister = document.getElementById('btnCancelRegister');
-const adminRegisterForm = document.getElementById('adminRegisterForm');
-const adminRegisterStatus = document.getElementById('adminRegisterStatus');
+//Elementos do Modal de Registro 
+const registerModal = document.getElementById('registerModal')
+const btnRegisterModal = document.getElementById('btnRegisterModal')
+const btnCancelRegister = document.getElementById('btnCancelRegister')
+const adminRegisterForm = document.getElementById('adminRegisterForm')
+const adminRegisterStatus = document.getElementById('adminRegisterStatus')
 
-//Variável Global para o Token
+// Váriável Global para o Token
 let authToken = '';
 
 // ----------------------------
@@ -89,12 +86,12 @@ function editUser(userId, userData) {
         .catch(error => console.error('Erro ao editar usuário:', error));
 }
 
-//Função para Criar conta - Registrar Aministrador
+//Função para Criar Conta - Registrar Administrador
 function handleAdminRegister(email, password) {
-    adminRegisterStatus.textContent = 'Registrando...';
-    adminRegisterStatus.style.color = 'blue';
+    adminRegisterStatus.textContent = "Registrando...";
+    adminRegisterStatus.style.color = "blue";
 
-    fetch('https://localhost:3002/api/register-admin'{
+    fetch('http://localhost:3003/api/register-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -102,77 +99,76 @@ function handleAdminRegister(email, password) {
         .then(response => response.json())
         .then(data => {
             if (data.mensagem && data.mensagem.includes("sucesso")) {
-                adminRegisterStatus.style.color = 'green';
-                adminRegisterStatus.textContent = 'conta criada com sucesso';
+                adminRegisterStatus.style.color = "green";
+                adminRegisterStatus.textContent = "Conta criada com sucesso";
                 setTimeout(() => {
                     registerModal.style.display = 'none';
                     document.getElementById('regUsername').value = '';
                     document.getElementById('regPassword').value = '';
                 }, 2000);
-
             } else {
-                adminRegisterStatus.style.color = 'red';
+                adminRegisterStatus.style.color = "red";
                 adminRegisterStatus.textContent = data.mensagem;
             }
         })
         .catch(() => {
-            adminRegisterStatus.style.color = 'red';
-            adminRegisterStatus.textContent = 'Erro na rede ou servidor';
-        })
+            adminRegisterStatus.style.color = "red";
+            adminRegisterStatus.textContent = "Erro de rede ou servidor";
+        });
 }
 
-//Função para login 
-function handleAdminLogin(email, password){
-    fetch('https://localhost:3002/api/register-admin', {
+//Função para login
+function handleAdminLogin(email, password) {
+    fetch('http://localhost:3003/api/login-admin', {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({email, password})
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
     })
-    .then(response => response.json())
-    .then(data => {
-        if(data.token) {
-            authToken = data.token;
-            adminAuthStatus.style.color = 'green';
-            adminAuthStatus.textContent = 'Login realizado com sucesso! Token obtido';
-            loginModal.style.display = 'none'
-        }else{
-            authToken = '';
+        .then(response => response.json())
+        .then(data => {
+            if (data.token) {
+                authToken = data.token;
+                adminAuthStatus.style.color = 'green';
+                adminAuthStatus.textContent = 'Login realizado com sucesso! Token obtido';
+                loginModal.style.display = 'none'
+            } else {
+                authToken = '';
+                adminAuthStatus.style.color = 'red';
+                adminAuthStatus.textContent = data.mensagem;
+            }
+        })
+        .catch(() => {
             adminAuthStatus.style.color = 'red';
-            adminAuthStatus.textContent = data.mensagem;
-        }
-    })
-    .catch(() => {
-        adminAuthStatus.style.color = 'red';
-        adminAuthStatus.textContent = 'Erro de rede ou servidor';
-    })
+            adminAuthStatus.textContent = "Erro de rede ou servidor";
+        })
 }
 
 // Função para deletar um usuário
 function deleteUser(userId) {
-    if(!authToken){
+    if (!authToken) {
         adminAuthStatus.style.color = 'orange';
         adminAuthStatus.textContent = 'ERRO: Faça login para deletar';
         return
     }
+
     fetch(`${API_URL}/${userId}`, {
         method: 'DELETE',
         headers: {
-            'Autorizathion':`Bearer ${authToken}`
+            'Authorization': `Bearer ${authToken}`
         }
     })
-    .then(response => {
-        if(response.status === 401){
-            adminAuthStatus.style.color = 'red';
-            adminAuthStatus.textContent = 'Não autorizado! Token inválido'
-            return response.json().then(err => Promise.reject(err));
-        }
-        return response.json
-    })
-    .then(() => {
-        fetchAndRenderUsers()
-
-    })
-    .catch(error => console.error('Erro ao excluir usuário:', error.message))
+        .then(response => {
+            if (response.status === 401) {
+                adminAuthStatus.style.color = 'red';
+                adminAuthStatus.textContent = 'Não Autorizado! Token Inválido'
+                return response.json().then(err => Promise.reject(err));
+            }
+            return response.json();
+        })
+        .then(() => {
+            fetchAndRenderUsers()
+        })
+        .catch(error => console.error('Erro ao excluir usuário:', error.mensagem))
 }
 
 
@@ -263,11 +259,51 @@ btnCancelEdit.addEventListener('click', () => {
     editModal.style.display = 'none';
 });
 
+//LISTENERS MODAL DE LOGIN
+btnLoginModal.addEventListener('click', () => {
+    loginModal.style.display = "flex"
+})
+
+btnCancelLogin.addEventListener('click', () => {
+    loginModal.style.display = "none"
+})
+
+adminLoginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('adminUsername').value;
+    const password = document.getElementById('adminPassword').value;
+    handleAdminLogin(email, password);
+})
+
+//LISTENERS REGISTRO ADMIN
+btnRegisterModal.addEventListener('click', () => {
+    registerModal.style.display = 'flex';
+    adminRegisterStatus.textContent = '';
+})
+
+btnCancelRegister.addEventListener('click', () => {
+    registerModal.style.display = 'none';
+})
+
+adminRegisterForm.addEventListener('submit', (e) => {
+    e.preventDefault()
+    const email = document.getElementById('regUsername').value
+    const password = document.getElementById('regPassword').value
+    handleAdminRegister(email, password)
+})
+
 // Opcional: Oculta o modal se clicar fora dele
 window.addEventListener('click', (e) => {
     if (e.target === editModal) {
         editModal.style.display = 'none';
     }
+    if (e.target === loginModal) {
+        loginModal.style.display = 'none';
+    }
+    if (e.target === registerModal) {
+        registerModal.style.display = 'none';
+    }
+
 });
 
 
